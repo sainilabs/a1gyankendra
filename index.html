@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0EA5E9">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="Assets/icon-192.png">
+  <title>A1Gyankendra</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js');
+  }
+</script>
+
+  <div class="container">
+    <header class="header">
+      <button class="btn-reset-all" id="btnResetAll">&#x21bb; Reset All</button>
+      <h1>A1Gyankendra</h1>
+      <p class="subtitle">Library Admin Dashboard</p>
+    </header>
+
+    <!-- Reset Confirm Modal -->
+    <div class="confirm-overlay" id="confirmOverlay">
+      <div class="confirm-box">
+        <h3>&#9888; Are you sure?</h3>
+        <p>This will permanently delete ALL student data from every seat and the Google Sheet. This action cannot be undone!</p>
+        <div class="confirm-password">
+          <label for="resetPassword">Enter Password to confirm:</label>
+          <input type="password" id="resetPassword" placeholder="Enter password" />
+          <p class="reset-error" id="resetError"></p>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn btn-confirm-yes" id="btnConfirmYes">Yes, Reset All</button>
+          <button class="btn btn-confirm-no" id="btnConfirmNo">No, Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat"><span id="totalSeats">0</span> Total Seats</div>
+      <div class="stat"><span id="occupiedCount">0</span> Occupied</div>
+      <div class="stat"><span id="pendingCount">0</span> Fees Pending</div>
+      <div class="stat"><span id="emptyCount">0</span> Empty</div>
+      <div class="stat"><span id="revenueThisMonth">&#8377;0</span> Revenue This Month</div>
+      <div class="stat stat-clickable" id="statPendingFees"><span id="totalPendingFees">&#8377;0</span> Pending Fees</div>
+      <div class="stat stat-clickable" id="statExpiringSoon"><span id="expiringSoonCount">0</span> Expiring Soon</div>
+    </div>
+
+    <!-- Stats List Popup -->
+    <div class="stats-list-overlay" id="statsListOverlay">
+      <div class="stats-list-box">
+        <div class="stats-list-header">
+          <h3 id="statsListTitle">Students</h3>
+          <button class="modal-close" id="statsListClose">&times;</button>
+        </div>
+        <div class="stats-list-body" id="statsListBody"></div>
+      </div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search student by name..." />
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><div class="legend-box red"></div><span>Empty</span></div>
+      <div class="legend-item"><div class="legend-box green"></div><span>Occupied (Paid)</span></div>
+      <div class="legend-item"><div class="legend-box yellow"></div><span>Fees Pending</span></div>
+    </div>
+
+    <!-- Floor Plan (matches physical library layout) -->
+    <div class="floor-plan" id="seatGrid">
+      <div class="wall-label left-label">Left Wall</div>
+      <div class="wall-label right-label">Right Wall</div>
+
+      <!-- Left Wall Column: seats 1-7 (vertical, 1 near entry) -->
+      <div class="seat-col" id="colLeft">
+        <div class="seat empty" data-seat="7">7</div>
+        <div class="seat empty" data-seat="6">6</div>
+        <div class="seat empty" data-seat="5">5</div>
+        <div class="seat empty" data-seat="4">4</div>
+        <div class="seat empty" data-seat="3">3</div>
+        <div class="seat empty" data-seat="2">2</div>
+        <div class="seat empty" data-seat="1">1</div>
+      </div>
+
+      <!-- Center Area: two vertical columns side by side -->
+      <div class="center-area">
+        <div class="seat-col" id="colCenter1">
+          <div class="seat empty" data-seat="14">14</div>
+          <div class="seat empty" data-seat="13">13</div>
+          <div class="seat empty" data-seat="12">12</div>
+          <div class="seat empty" data-seat="11">11</div>
+          <div class="seat empty" data-seat="10">10</div>
+          <div class="seat empty" data-seat="9">9</div>
+          <div class="seat empty" data-seat="8">8</div>
+        </div>
+        <div class="seat-col" id="colCenter2">
+          <div class="seat empty" data-seat="21">21</div>
+          <div class="seat empty" data-seat="20">20</div>
+          <div class="seat empty" data-seat="19">19</div>
+          <div class="seat empty" data-seat="18">18</div>
+          <div class="seat empty" data-seat="17">17</div>
+          <div class="seat empty" data-seat="16">16</div>
+          <div class="seat empty" data-seat="15">15</div>
+        </div>
+      </div>
+
+      <!-- Right Wall Column: seats 22-30 (vertical, 22 near entry) -->
+      <div class="seat-col" id="colRight">
+        <div class="seat empty" data-seat="30">30</div>
+        <div class="seat empty" data-seat="29">29</div>
+        <div class="seat empty" data-seat="28">28</div>
+        <div class="seat empty" data-seat="27">27</div>
+        <div class="seat empty" data-seat="26">26</div>
+        <div class="seat empty" data-seat="25">25</div>
+        <div class="seat empty" data-seat="24">24</div>
+        <div class="seat empty" data-seat="23">23</div>
+        <div class="seat empty" data-seat="22">22</div>
+      </div>
+
+      <!-- Bottom Row: seats 36-31 (left to right per image) -->
+      <div class="bottom-row">
+        <div class="seat empty" data-seat="36">36</div>
+        <div class="seat empty" data-seat="35">35</div>
+        <div class="seat empty" data-seat="34">34</div>
+        <div class="seat empty" data-seat="33">33</div>
+        <div class="seat empty" data-seat="32">32</div>
+        <div class="seat empty" data-seat="31">31</div>
+      </div>
+      <div class="entry-label">&#9650; ENTRY GATE</div>
+    </div>
+
+    <div class="footer">
+      <p>&copy; 2026 A1Gyankendra. All rights reserved.</p>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Seat 1</h2>
+        <button class="modal-close" id="modalClose">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="studentName">Student Name <span style="color:#e74c3c">*</span></label>
+          <input type="text" id="studentName" placeholder="Enter student name" />
+        </div>
+        <div class="form-group">
+          <label for="phoneNumber">Phone Number <span style="color:#e74c3c">*</span></label>
+          <input type="tel" id="phoneNumber" placeholder="Enter phone number" />
+        </div>
+        <div class="form-group">
+          <label for="feesAmount">Fees Amount (&#8377;) <span style="color:#e74c3c">*</span></label>
+          <input type="number" id="feesAmount" placeholder="Enter fee amount" min="0" />
+        </div>
+        <div class="form-group">
+          <label for="startDate">Start Date <span style="color:#e74c3c">*</span></label>
+          <input type="date" id="startDate" />
+        </div>
+        <div class="form-group">
+          <label for="lastPaid">Last Paid Date <span style="color:#e74c3c">*</span></label>
+          <input type="date" id="lastPaid" />
+        </div>
+        <div class="form-group">
+          <label for="duration">Fee Duration (days) <span style="color:#e74c3c">*</span></label>
+          <input type="number" id="duration" placeholder="30" min="1" value="30" />
+        </div>
+        <div class="form-group">
+          <label for="feesStatus">Fees Status <span style="color:#e74c3c">*</span></label>
+          <select id="feesStatus">
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="remarks">Remarks <span style="color:#e74c3c">*</span></label>
+          <input type="text" id="remarks" placeholder="Notes about the student" />
+        </div>
+        <div class="form-group">
+          <label for="anyOther">Any Other</label>
+          <input type="text" id="anyOther" placeholder="Additional notes (optional)" />
+        </div>
+        <div id="dueDateDisplay" class="due-date-display"></div>
+        <div id="feeWarning" class="fee-warning"></div>
+        <div id="paymentHistory" class="payment-history"></div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-save" id="btnSave">Save</button>
+        <button class="btn btn-remove" id="btnRemove">Remove Student</button>
+        <button class="btn btn-whatsapp" id="btnWhatsapp">&#128241; WhatsApp Reminder</button>
+      </div>
+      <div id="modalMessage" class="modal-message"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
